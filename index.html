@@ -1,0 +1,367 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flux Vibes - Real-time Audio Visualizer</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+
+        :root {
+            --background-color: #0a0a0f;
+            --primary-color: #8a2be2;
+            --secondary-color: #4b0082;
+            --accent-color: #00ffff;
+            --text-color: #e0e0e0;
+            --glow-color: rgba(138, 43, 226, 0.6);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            text-align: center;
+        }
+
+        #visualization {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .content-wrapper {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            background: rgba(10, 10, 15, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 var(--glow-color);
+            transition: opacity 0.5s ease-in-out;
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-color);
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px var(--accent-color), 0 0 20px var(--primary-color);
+        }
+
+        p {
+            font-size: 1.1rem;
+            font-weight: 300;
+            max-width: 600px;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        #startButton {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            color: var(--text-color);
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            font-weight: 400;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 15px var(--glow-color), 0 0 25px var(--glow-color) inset;
+            letter-spacing: 1px;
+        }
+
+        #startButton:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 25px var(--glow-color), 0 0 40px var(--glow-color) inset;
+        }
+        
+        #startButton:active {
+            transform: scale(0.98);
+        }
+
+        .instructions {
+            margin-top: 2rem;
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+        
+        .footer {
+            position: absolute;
+            bottom: 15px;
+            font-size: 0.8rem;
+            opacity: 0.5;
+            z-index: 3;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="visualization"></canvas>
+    
+    <div class="content-wrapper" id="mainContent">
+        <h1>Flux Vibes</h1>
+        <p>An interactive, real-time audiovisual experience. Your voice and ambient sounds create mesmerizing generative art. Click the button below and allow microphone access to begin the show.</p>
+        <button id="startButton">Start Visualization</button>
+        <div class="instructions">
+            <p>For the best experience, use headphones and try speaking, humming, or playing music.</p>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>Created by OpenClaw AI for Project Green</p>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('visualization');
+        const ctx = canvas.getContext('2d');
+        const mainContent = document.getElementById('mainContent');
+        const startButton = document.getElementById('startButton');
+
+        let audioContext;
+        let analyser;
+        let microphone;
+        let javascriptNode;
+
+        let particles = [];
+        const particleCount = 2000;
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 1.5 + 0.5;
+                this.baseX = this.x;
+                this.baseY = this.y;
+                this.density = (Math.random() * 30) + 1;
+                this.speedX = (Math.random() - 0.5) * 0.5;
+                this.speedY = (Math.random() - 0.5) * 0.5;
+                this.color = 'hsl(' + (260 + Math.random() * 40) + ', 100%, 50%)';
+            }
+
+            update(audioLevel) {
+                let dx = mouse.x - this.x;
+                let dy = mouse.y - this.y;
+                let distance = Math.sqrt(dx * dx + dy * dy);
+                let forceDirectionX = dx / distance;
+                let forceDirectionY = dy / distance;
+                let maxDistance = mouse.radius;
+                let force = (maxDistance - distance) / maxDistance;
+                
+                let directionX = forceDirectionX * force * this.density;
+                let directionY = forceDirectionY * force * this.density;
+
+                if (distance < mouse.radius) {
+                    this.x -= directionX;
+                    this.y -= directionY;
+                } else {
+                    if (this.x !== this.baseX) {
+                        let dx = this.x - this.baseX;
+                        this.x -= dx / 10;
+                    }
+                    if (this.y !== this.baseY) {
+                        let dy = this.y - this.baseY;
+                        this.y -= dy / 10;
+                    }
+                }
+
+                // Add audio influence
+                if (audioLevel > 0.1) {
+                    this.x += (Math.random() - 0.5) * audioLevel * 5;
+                    this.y += (Math.random() - 0.5) * audioLevel * 5;
+                }
+                
+                // Add inherent motion
+                this.x += this.speedX;
+                this.y += this.speedY;
+
+                // Boundary check
+                if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
+                if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
+            }
+
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.closePath();
+                ctx.fill();
+            }
+        }
+
+        const mouse = {
+            x: null,
+            y: null,
+            radius: 150
+        }
+
+        window.addEventListener('mousemove', (event) => {
+            mouse.x = event.x;
+            mouse.y = event.y;
+        });
+
+        window.addEventListener('mouseout', () => {
+            mouse.x = null;
+            mouse.y = null;
+        });
+        
+        window.addEventListener('touchstart', (event) => {
+            mouse.x = event.touches[0].clientX;
+            mouse.y = event.touches[0].clientY;
+        }, {passive: false});
+
+        window.addEventListener('touchmove', (event) => {
+            event.preventDefault();
+            mouse.x = event.touches[0].clientX;
+            mouse.y = event.touches[0].clientY;
+        }, {passive: false});
+
+        window.addEventListener('touchend', () => {
+            mouse.x = null;
+            mouse.y = null;
+        });
+
+        function initParticles() {
+            particles = [];
+            for (let i = 0; i < particleCount; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        function handleParticles(audioLevel = 0) {
+            for (let i = 0; i < particles.length; i++) {
+                particles[i].update(audioLevel);
+                particles[i].draw();
+            }
+        }
+        
+        function animate(audioLevel = 0) {
+             ctx.fillStyle = 'rgba(10, 10, 15, 0.25)';
+             ctx.fillRect(0, 0, canvas.width, canvas.height);
+             handleParticles(audioLevel);
+             connectParticles(audioLevel);
+             requestAnimationFrame(() => animate(audioLevel));
+        }
+        
+         function connectParticles(audioLevel) {
+            let opacityValue = 1;
+            for (let a = 0; a < particles.length; a++) {
+                for (let b = a; b < particles.length; b++) {
+                    let dx = particles[a].x - particles[b].x;
+                    let dy = particles[a].y - particles[b].y;
+                    let distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < 35) {
+                        opacityValue = 1 - (distance / 35);
+                        let colorIntensity = Math.min(1, audioLevel * 5);
+                        ctx.strokeStyle = `rgba(173, 216, 230, ${opacityValue * colorIntensity * 0.5})`; // Light blue connections based on audio
+                        ctx.lineWidth = 0.5;
+                        ctx.beginPath();
+                        ctx.moveTo(particles[a].x, particles[a].y);
+                        ctx.lineTo(particles[b].x, particles[b].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+
+
+        function setupAudio() {
+            return navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+                .then(stream => {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    analyser = audioContext.createAnalyser();
+                    microphone = audioContext.createMediaStreamSource(stream);
+                    javascriptNode = audioContext.createScriptProcessor(2048, 1, 1);
+
+                    analyser.smoothingTimeConstant = 0.8;
+                    analyser.fftSize = 1024;
+
+                    microphone.connect(analyser);
+                    analyser.connect(javascriptNode);
+                    javascriptNode.connect(audioContext.destination);
+
+                    javascriptNode.onaudioprocess = () => {
+                        const array = new Uint8Array(analyser.frequencyBinCount);
+                        analyser.getByteFrequencyData(array);
+                        let values = 0;
+
+                        const length = array.length;
+                        for (let i = 0; i < length; i++) {
+                            values += (array[i]);
+                        }
+
+                        const average = values / length;
+                        const normalizedAverage = Math.min(average / 100, 1.0); // Normalize and cap
+                        
+                        // Clear canvas and redraw with new audio level
+                        ctx.fillStyle = 'rgba(10, 10, 15, 0.25)';
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        handleParticles(normalizedAverage);
+                        connectParticles(normalizedAverage);
+                    }
+                })
+                .catch(err => {
+                    console.error('Microphone access denied:', err);
+                    alert('Microphone access is required for the visualization. Please allow access and refresh.');
+                });
+        }
+
+        startButton.addEventListener('click', () => {
+            if (audioContext) {
+                audioContext.resume();
+            } else {
+                setupAudio().then(() => {
+                    mainContent.style.opacity = '0';
+                    mainContent.style.pointerEvents = 'none';
+                });
+            }
+        });
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            initParticles();
+        });
+
+        // Initial setup
+        initParticles();
+        // Fallback animation if audio is not started
+        function fallbackAnimate() {
+            if (!audioContext) {
+                 ctx.fillStyle = 'rgba(10, 10, 15, 0.25)';
+                 ctx.fillRect(0, 0, canvas.width, canvas.height);
+                 handleParticles();
+                 connectParticles();
+                 requestAnimationFrame(fallbackAnimate);
+            }
+        }
+        fallbackAnimate();
+    </script>
+</body>
+</html>
