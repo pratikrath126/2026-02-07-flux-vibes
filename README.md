@@ -5,7 +5,7 @@
 
 ## 🚀 Live Demo
 
-A live demo will be available upon deployment.
+A live demo is available at [https://flux-vibes.onrender.com](https://flux-vibes.onrender.com).
 
 ## ✨ Features
 
