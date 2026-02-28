@@ -7,6 +7,8 @@
 
 A live demo is available at [https://flux-vibes.onrender.com](https://flux-vibes.onrender.com).
 
+Render Dashboard: [https://dashboard.render.com/static/srv-d6hadp95pdvs73de98u0](https://dashboard.render.com/static/srv-d6hadp95pdvs73de98u0)
+
 ## ✨ Features
 
 - **Real-time Audio Analysis:** Captures microphone input and analyzes frequency data on the fly.

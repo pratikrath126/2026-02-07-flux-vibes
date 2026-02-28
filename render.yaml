@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: flux-vibes
+    env: static
+    buildCommand: echo "Building..."
+    staticPublishPath: ./
