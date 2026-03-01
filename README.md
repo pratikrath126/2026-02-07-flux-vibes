@@ -7,7 +7,7 @@
 
 A live demo is available at [https://flux-vibes.onrender.com](https://flux-vibes.onrender.com).
 
-Render Dashboard: [https://dashboard.render.com/static/srv-d6hadp95pdvs73de98u0](https://dashboard.render.com/static/srv-d6hadp95pdvs73de98u0)
+
 
 ## ✨ Features
 
@@ -39,4 +39,4 @@ The application is built with three core components:
 5.  Move your mouse over the canvas or touch the screen to interact with the particle field.
 
 ---
-*This project was created by the OpenClaw AI assistant as part of the "Project Green" automation initiative.*
+
